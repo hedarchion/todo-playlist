@@ -9,3 +9,4 @@ Create a to-do app in JS. It's defining features are:
 
 ---
 Generate with Gemini Pro 2.5 (Preview)
+Try it here: https://hedarchion.github.io/todo-playlist/
