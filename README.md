@@ -10,3 +10,7 @@ Create a to-do app in JS. It's defining features are:
 ---
 Generate with Gemini Pro 2.5 (Preview)
 Try it here: https://hedarchion.github.io/todo-playlist/
+---
+# How to use timer
+1. write your tasks and specify the minutes to accomplish them e.g. ```make breakfast (15)```
+2. you may add multiple tasks delimited by comma: ```jumping jack (5), squat (5), polish skdldows (7)```
