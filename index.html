@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Japandi Timer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Japandi Color Palette */
+            --bg-color: #F5F5F3; /* Off-white, rice paper */
+            --primary-text: #343434; /* Dark charcoal, almost black */
+            --secondary-text: #6B7280; /* Muted grey - Adjusted for better visibility */
+            --accent-color: #B9A28C; /* Warm, sandy beige */
+            --accent-color-dark: #9A8370;
+            --container-bg: #FFFFFF;
+            --border-color: #E5E5E3;
+            --timer-bg: #EAEAEA;
+            --timer-fill: #343434;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-text);
+        }
+        
+        /* Utility classes to correctly apply CSS variables */
+        .bg-main { background-color: var(--bg-color); }
+        .bg-container { background-color: var(--container-bg); }
+        .bg-accent { background-color: var(--accent-color); }
+        .bg-primary-text { background-color: var(--primary-text); }
+        .bg-secondary-text { background-color: var(--secondary-text); }
+        .hover-bg-accent-dark:hover { background-color: var(--accent-color-dark); }
+        
+        .text-primary { color: var(--primary-text); }
+        .text-secondary { color: var(--secondary-text); }
+        .border-main { border-color: var(--border-color); }
+
+        .focus-ring-accent:focus {
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            border-color: var(--accent-color);
+            --tw-ring-color: var(--accent-color);
+            --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+            --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+            box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+        }
+        
+        .timer-circle {
+            transition: stroke-dashoffset 0.3s linear;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        /* Custom scrollbar for a more minimal look */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--secondary-text); }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="app" class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 transition-all duration-500">
+        
+        <!-- Main Application Container -->
+        <div class="w-full max-w-lg mx-auto bg-container rounded-2xl shadow-lg p-6 sm:p-8 space-y-6">
+
+            <!-- Header and Task Input -->
+            <div class="text-center">
+                <h1 class="text-3xl font-bold text-primary">Japandi Timer</h1>
+                <p class="text-secondary mt-1">Focus, one task at a time.</p>
+            </div>
+            
+            <div class="relative">
+                <input id="taskInput" type="text" placeholder='e.g., Meditate (10), Read book (25)' class="w-full bg-main border-2 border-main rounded-lg py-3 px-4 focus-ring-accent transition-colors" />
+                <button id="addTaskBtn" class="absolute right-2 top-1/2 -translate-y-1/2 bg-accent text-white font-semibold px-4 py-2 rounded-md hover-bg-accent-dark transition-colors">
+                    Add
+                </button>
+            </div>
+
+            <!-- Task List -->
+            <div id="taskList" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                <!-- Tasks will be dynamically inserted here -->
+            </div>
+
+            <!-- Playlist Controls -->
+            <div class="flex items-center justify-center pt-4 border-t border-main">
+                 <button id="startPlaylistBtn" class="bg-primary-text text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-700 transition-transform transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                    Start Playlist
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Timer Modal -->
+        <div id="timerModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
+            <div class="bg-container rounded-2xl shadow-2xl p-8 sm:p-10 w-full max-w-md text-center space-y-6">
+                <h2 id="timerTaskName" class="text-2xl sm:text-3xl font-bold text-primary"></h2>
+                
+                <!-- Dieter Rams Inspired Timer (FIXED Design) -->
+                <div class="relative w-64 h-64 mx-auto">
+                    <svg class="w-full h-full" viewBox="0 0 100 100">
+                        <!-- Background circle -->
+                        <circle stroke="var(--timer-bg)" stroke-width="12" fill="var(--container-bg)" r="44" cx="50" cy="50" />
+                        
+                        <!-- Dial markings will be generated here by JS -->
+                        <g id="timerDialMarks"></g>
+
+                        <!-- Progress circle -->
+                        <circle id="timerProgress" class="timer-circle" stroke-width="8" stroke-linecap="round" stroke="var(--timer-fill)" fill="transparent" r="44" cx="50" cy="50" />
+                    </svg>
+                    <div id="timerDisplay" class="absolute inset-0 flex items-center justify-center text-5xl font-bold text-primary">
+                        00:00
+                    </div>
+                </div>
+
+                <!-- End of Task Prompt -->
+                <div id="endPrompt" class="hidden space-y-4 pt-4">
+                     <p class="text-lg text-secondary">Task finished. What's next?</p>
+                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <button id="nextTaskBtn" class="w-full bg-primary-text text-white font-semibold py-3 px-5 rounded-lg hover:bg-gray-700 transition-colors">
+                            Next Task
+                        </button>
+                        <button id="closeModalBtn" class="w-full bg-secondary-text text-white font-semibold py-3 px-5 rounded-lg hover:bg-gray-500 transition-colors">
+                            Finish Session
+                        </button>
+                     </div>
+                     <div class="flex items-center justify-center pt-4">
+                         <p class="text-sm text-secondary mr-4">Or add more time:</p>
+                         <button class="add-time-btn bg-accent text-white rounded-full h-10 w-10 font-bold hover-bg-accent-dark transition-colors" data-time="1">1</button>
+                         <button class="add-time-btn bg-accent text-white rounded-full h-10 w-10 font-bold ml-2 hover-bg-accent-dark transition-colors" data-time="5">5</button>
+                         <button class="add-time-btn bg-accent text-white rounded-full h-10 w-10 font-bold ml-2 hover-bg-accent-dark transition-colors" data-time="10">10</button>
+                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Audio element for the ringtone -->
+    <audio id="ringtone" src="ringtone.ogg" preload="auto"></audio>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const taskInput = document.getElementById('taskInput');
+            const addTaskBtn = document.getElementById('addTaskBtn');
+            const taskList = document.getElementById('taskList');
+            const startPlaylistBtn = document.getElementById('startPlaylistBtn');
+            const timerModal = document.getElementById('timerModal');
+            const timerTaskName = document.getElementById('timerTaskName');
+            const timerDisplay = document.getElementById('timerDisplay');
+            const timerProgress = document.getElementById('timerProgress');
+            const timerDialMarks = document.getElementById('timerDialMarks');
+            const endPrompt = document.getElementById('endPrompt');
+            const nextTaskBtn = document.getElementById('nextTaskBtn');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const ringtone = document.getElementById('ringtone'); // Audio element
+
+            // App State
+            let tasks = [];
+            let currentTaskIndex = -1;
+            let timerInterval;
+            let totalSeconds = 0;
+            let secondsRemaining = 0;
+            const progressCircleRadius = timerProgress.r.baseVal.value;
+            const progressCircleCircumference = 2 * Math.PI * progressCircleRadius;
+            timerProgress.style.strokeDasharray = `${progressCircleCircumference} ${progressCircleCircumference}`;
+            timerProgress.style.strokeDashoffset = progressCircleCircumference;
+            
+            // SVG Namespace
+            const svgNS = "http://www.w3.org/2000/svg";
+
+            // --- Timer Dial Generation ---
+
+            function renderDialMarks() {
+                timerDialMarks.innerHTML = ''; // Clear previous marks
+                const center = 50;
+                const majorRadius = 38; 
+                const minorRadius = 40;
+                const textRadius = 32; 
+
+                for (let i = 0; i < 60; i++) {
+                    const angle = (i / 60) * 360 - 90;
+                    const angleRad = (angle * Math.PI) / 180;
+                    
+                    const isMajorTick = i % 5 === 0;
+                    const isNumberedTick = i % 10 === 0;
+
+                    const tickStartRadius = isMajorTick ? majorRadius : minorRadius;
+                    const tickEndRadius = 42;
+                    const x1 = center + Math.cos(angleRad) * tickStartRadius;
+                    const y1 = center + Math.sin(angleRad) * tickStartRadius;
+                    const x2 = center + Math.cos(angleRad) * tickEndRadius;
+                    const y2 = center + Math.sin(angleRad) * tickEndRadius;
+
+                    const line = document.createElementNS(svgNS, 'line');
+                    line.setAttribute('x1', x1);
+                    line.setAttribute('y1', y1);
+                    line.setAttribute('x2', x2);
+                    line.setAttribute('y2', y2);
+                    line.setAttribute('stroke', 'var(--secondary-text)');
+                    line.setAttribute('stroke-width', isMajorTick ? '0.75' : '0.5');
+                    timerDialMarks.appendChild(line);
+
+                    if (isNumberedTick) {
+                        const textX = center + Math.cos(angleRad) * textRadius;
+                        const textY = center + Math.sin(angleRad) * textRadius;
+                        const text = document.createElementNS(svgNS, 'text');
+                        text.setAttribute('x', textX);
+                        text.setAttribute('y', textY);
+                        text.setAttribute('font-size', '5');
+                        text.setAttribute('font-weight', '500');
+                        text.setAttribute('text-anchor', 'middle');
+                        text.setAttribute('dominant-baseline', 'middle');
+                        text.setAttribute('fill', 'var(--primary-text)');
+                        text.textContent = i === 0 ? '60' : i;
+                        timerDialMarks.appendChild(text);
+                    }
+                }
+            }
+
+
+            // --- Task Management ---
+
+            function parseAndAddTasks() {
+                const inputText = taskInput.value.trim();
+                if (!inputText) return;
+                const taskStrings = inputText.split(',');
+                taskStrings.forEach(str => {
+                    const match = str.trim().match(/^(.*?)\s*\((\d+)\)$/);
+                    if (match) {
+                        const name = match[1].trim();
+                        const duration = parseInt(match[2], 10);
+                        if (name && !isNaN(duration) && duration > 0) {
+                            tasks.push({ name, duration });
+                        }
+                    }
+                });
+                taskInput.value = '';
+                renderTasks();
+                updatePlaylistButton();
+            }
+            
+            function renderTasks() {
+                taskList.innerHTML = '';
+                if (tasks.length === 0) {
+                    taskList.innerHTML = `<p class="text-center text-secondary">Your task list is empty.</p>`;
+                } else {
+                    tasks.forEach((task, index) => {
+                        const taskElement = document.createElement('div');
+                        taskElement.className = 'flex items-center justify-between bg-main p-3 rounded-lg border border-main';
+                        taskElement.innerHTML = `
+                            <div>
+                                <p class="font-medium text-primary">${task.name}</p>
+                                <p class="text-sm text-secondary">${task.duration} minute${task.duration > 1 ? 's' : ''}</p>
+                            </div>
+                            <button class="remove-task-btn text-red-400 hover:text-red-600 font-bold text-xl" data-index="${index}">&times;</button>
+                        `;
+                        taskList.appendChild(taskElement);
+                    });
+                }
+            }
+            
+            function removeTask(index) {
+                tasks.splice(index, 1);
+                renderTasks();
+                updatePlaylistButton();
+            }
+
+            function updatePlaylistButton() {
+                startPlaylistBtn.disabled = tasks.length === 0;
+            }
+
+            // --- Playlist and Timer Logic ---
+            
+            function stopRingtone() {
+                ringtone.pause();
+                ringtone.currentTime = 0;
+            }
+
+            function startPlaylist() {
+                if (tasks.length === 0) return;
+                currentTaskIndex = 0;
+                startTask(currentTaskIndex);
+            }
+
+            function startTask(index) {
+                if (index >= tasks.length) {
+                    endPlaylist();
+                    return;
+                }
+                const task = tasks[index];
+                totalSeconds = task.duration * 60;
+                secondsRemaining = totalSeconds;
+
+                timerTaskName.textContent = task.name;
+                updateTimerDisplay();
+                updateProgressCircle();
+                showTimerModal();
+                hideEndPrompt();
+                stopRingtone();
+
+                clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    secondsRemaining--;
+                    updateTimerDisplay();
+                    updateProgressCircle();
+
+                    if (secondsRemaining <= 0) {
+                        clearInterval(timerInterval);
+                        handleTaskEnd();
+                    }
+                }, 1000);
+            }
+            
+            function handleTaskEnd() {
+                ringtone.play(); // Play the sound
+                showEndPrompt();
+                nextTaskBtn.style.display = (currentTaskIndex < tasks.length - 1) ? 'block' : 'none';
+            }
+
+            function startNextTask() {
+                stopRingtone();
+                currentTaskIndex++;
+                startTask(currentTaskIndex);
+            }
+
+            function addTime(minutes) {
+                stopRingtone();
+                hideEndPrompt();
+                
+                if (secondsRemaining <= 0) {
+                    totalSeconds = minutes * 60;
+                    secondsRemaining = minutes * 60;
+                } else {
+                    totalSeconds += minutes * 60;
+                    secondsRemaining += minutes * 60;
+                }
+                
+                clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    secondsRemaining--;
+                    updateTimerDisplay();
+                    updateProgressCircle();
+
+                    if (secondsRemaining <= 0) {
+                        clearInterval(timerInterval);
+                        handleTaskEnd();
+                    }
+                }, 1000);
+
+                updateTimerDisplay();
+                updateProgressCircle();
+            }
+
+            function endPlaylist() {
+                hideTimerModal();
+                currentTaskIndex = -1;
+            }
+
+            // --- UI Updates ---
+            
+            function updateTimerDisplay() {
+                const minutes = Math.floor(secondsRemaining / 60);
+                const seconds = secondsRemaining % 60;
+                timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }
+
+            function updateProgressCircle() {
+                // Handle division by zero
+                if (totalSeconds === 0) {
+                    timerProgress.style.strokeDashoffset = progressCircleCircumference;
+                    return;
+                }
+                const progress = secondsRemaining / totalSeconds;
+                const dashoffset = progressCircleCircumference * (1 - progress);
+                timerProgress.style.strokeDashoffset = Math.max(0, dashoffset);
+            }
+
+            function showTimerModal() {
+                timerModal.classList.remove('hidden');
+            }
+
+            function hideTimerModal() {
+                stopRingtone();
+                timerModal.classList.add('hidden');
+                clearInterval(timerInterval);
+            }
+            
+            function showEndPrompt() {
+                endPrompt.classList.remove('hidden');
+            }
+            
+            function hideEndPrompt() {
+                 endPrompt.classList.add('hidden');
+            }
+
+            // --- Event Listeners ---
+
+            addTaskBtn.addEventListener('click', parseAndAddTasks);
+            taskInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    parseAndAddTasks();
+                }
+            });
+            
+            taskList.addEventListener('click', (e) => {
+                if(e.target.classList.contains('remove-task-btn')) {
+                    const index = parseInt(e.target.dataset.index, 10);
+                    removeTask(index);
+                }
+            });
+
+            startPlaylistBtn.addEventListener('click', startPlaylist);
+            nextTaskBtn.addEventListener('click', startNextTask);
+            closeModalBtn.addEventListener('click', hideTimerModal);
+
+            document.querySelectorAll('.add-time-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const timeToAdd = parseInt(e.target.dataset.time, 10);
+                    addTime(timeToAdd);
+                });
+            });
+
+            // Initial Render
+            renderDialMarks();
+            renderTasks();
+            updatePlaylistButton();
+        });
+    </script>
+</body>
+</html>
