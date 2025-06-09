@@ -67,10 +67,8 @@
 
     <div id="app" class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 transition-all duration-500">
         
-        <!-- Main Application Container -->
         <div class="w-full max-w-lg mx-auto bg-container rounded-2xl shadow-lg p-6 sm:p-8 space-y-6">
 
-            <!-- Header and Task Input -->
             <div class="text-center">
                 <h1 class="text-3xl font-bold text-primary">Japandi Timer</h1>
                 <p class="text-secondary mt-1">Focus, one task at a time.</p>
@@ -83,12 +81,9 @@
                 </button>
             </div>
 
-            <!-- Task List -->
             <div id="taskList" class="space-y-3 max-h-60 overflow-y-auto pr-2">
-                <!-- Tasks will be dynamically inserted here -->
-            </div>
+                </div>
 
-            <!-- Playlist Controls -->
             <div class="flex items-center justify-center pt-4 border-t border-main">
                  <button id="startPlaylistBtn" class="bg-primary-text text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-700 transition-transform transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
                     Start Playlist
@@ -97,21 +92,20 @@
 
         </div>
 
-        <!-- Timer Modal -->
         <div id="timerModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
-            <div class="bg-container rounded-2xl shadow-2xl p-8 sm:p-10 w-full max-w-md text-center space-y-6">
+            <div class="bg-container rounded-2xl shadow-2xl p-8 sm:p-10 w-full max-w-md text-center space-y-6 relative">
+                 <button id="miniWindowBtn" class="absolute top-4 right-4 text-secondary hover:text-primary transition-colors" title="Open mini timer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                </button>
+
                 <h2 id="timerTaskName" class="text-2xl sm:text-3xl font-bold text-primary"></h2>
                 
-                <!-- Dieter Rams Inspired Timer (FIXED Design) -->
                 <div class="relative w-64 h-64 mx-auto">
                     <svg class="w-full h-full" viewBox="0 0 100 100">
-                        <!-- Background circle -->
                         <circle stroke="var(--timer-bg)" stroke-width="12" fill="var(--container-bg)" r="44" cx="50" cy="50" />
                         
-                        <!-- Dial markings will be generated here by JS -->
                         <g id="timerDialMarks"></g>
 
-                        <!-- Progress circle -->
                         <circle id="timerProgress" class="timer-circle" stroke-width="8" stroke-linecap="round" stroke="var(--timer-fill)" fill="transparent" r="44" cx="50" cy="50" />
                     </svg>
                     <div id="timerDisplay" class="absolute inset-0 flex items-center justify-center text-5xl font-bold text-primary">
@@ -119,7 +113,6 @@
                     </div>
                 </div>
 
-                <!-- End of Task Prompt -->
                 <div id="endPrompt" class="hidden space-y-4 pt-4">
                      <p class="text-lg text-secondary">Task finished. What's next?</p>
                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -141,10 +134,13 @@
         </div>
     </div>
     
-    <!-- Audio element for the ringtone -->
     <audio id="ringtone" src="ringtone.ogg" preload="auto"></audio>
 
     <script>
+        // Make functions globally accessible for the mini-window
+        window.startNextTask = startNextTask;
+        window.addTime = addTime;
+
         document.addEventListener('DOMContentLoaded', () => {
             // DOM Elements
             const taskInput = document.getElementById('taskInput');
@@ -159,7 +155,8 @@
             const endPrompt = document.getElementById('endPrompt');
             const nextTaskBtn = document.getElementById('nextTaskBtn');
             const closeModalBtn = document.getElementById('closeModalBtn');
-            const ringtone = document.getElementById('ringtone'); // Audio element
+            const ringtone = document.getElementById('ringtone');
+            const miniWindowBtn = document.getElementById('miniWindowBtn');
 
             // App State
             let tasks = [];
@@ -167,18 +164,18 @@
             let timerInterval;
             let totalSeconds = 0;
             let secondsRemaining = 0;
+            let miniWindow = null;
             const progressCircleRadius = timerProgress.r.baseVal.value;
             const progressCircleCircumference = 2 * Math.PI * progressCircleRadius;
             timerProgress.style.strokeDasharray = `${progressCircleCircumference} ${progressCircleCircumference}`;
-            timerProgress.style.strokeDashoffset = progressCircleCircumference;
             
             // SVG Namespace
             const svgNS = "http://www.w3.org/2000/svg";
 
             // --- Timer Dial Generation ---
-
             function renderDialMarks() {
-                timerDialMarks.innerHTML = ''; // Clear previous marks
+                // This function remains unchanged
+                timerDialMarks.innerHTML = ''; 
                 const center = 50;
                 const majorRadius = 38; 
                 const minorRadius = 40;
@@ -224,10 +221,9 @@
                 }
             }
 
-
             // --- Task Management ---
-
             function parseAndAddTasks() {
+                // This function remains unchanged
                 const inputText = taskInput.value.trim();
                 if (!inputText) return;
                 const taskStrings = inputText.split(',');
@@ -247,6 +243,7 @@
             }
             
             function renderTasks() {
+                // This function remains unchanged
                 taskList.innerHTML = '';
                 if (tasks.length === 0) {
                     taskList.innerHTML = `<p class="text-center text-secondary">Your task list is empty.</p>`;
@@ -299,8 +296,7 @@
                 secondsRemaining = totalSeconds;
 
                 timerTaskName.textContent = task.name;
-                updateTimerDisplay();
-                updateProgressCircle();
+                updateUIs();
                 showTimerModal();
                 hideEndPrompt();
                 stopRingtone();
@@ -308,8 +304,7 @@
                 clearInterval(timerInterval);
                 timerInterval = setInterval(() => {
                     secondsRemaining--;
-                    updateTimerDisplay();
-                    updateProgressCircle();
+                    updateUIs();
 
                     if (secondsRemaining <= 0) {
                         clearInterval(timerInterval);
@@ -319,8 +314,11 @@
             }
             
             function handleTaskEnd() {
-                ringtone.play(); // Play the sound
+                ringtone.play();
                 showEndPrompt();
+                if (miniWindow && !miniWindow.closed) {
+                    miniWindow.showEndPrompt(currentTaskIndex < tasks.length - 1);
+                }
                 nextTaskBtn.style.display = (currentTaskIndex < tasks.length - 1) ? 'block' : 'none';
             }
 
@@ -329,11 +327,16 @@
                 currentTaskIndex++;
                 startTask(currentTaskIndex);
             }
+            window.startNextTask = startNextTask;
+
 
             function addTime(minutes) {
                 stopRingtone();
                 hideEndPrompt();
-                
+                 if (miniWindow && !miniWindow.closed) {
+                    miniWindow.hideEndPrompt();
+                }
+
                 if (secondsRemaining <= 0) {
                     totalSeconds = minutes * 60;
                     secondsRemaining = minutes * 60;
@@ -345,8 +348,7 @@
                 clearInterval(timerInterval);
                 timerInterval = setInterval(() => {
                     secondsRemaining--;
-                    updateTimerDisplay();
-                    updateProgressCircle();
+                    updateUIs();
 
                     if (secondsRemaining <= 0) {
                         clearInterval(timerInterval);
@@ -354,9 +356,9 @@
                     }
                 }, 1000);
 
-                updateTimerDisplay();
-                updateProgressCircle();
+                updateUIs();
             }
+            window.addTime = addTime;
 
             function endPlaylist() {
                 hideTimerModal();
@@ -365,21 +367,25 @@
 
             // --- UI Updates ---
             
-            function updateTimerDisplay() {
+            function updateUIs() {
                 const minutes = Math.floor(secondsRemaining / 60);
                 const seconds = secondsRemaining % 60;
-                timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-            }
-
-            function updateProgressCircle() {
-                // Handle division by zero
-                if (totalSeconds === 0) {
-                    timerProgress.style.strokeDashoffset = progressCircleCircumference;
-                    return;
+                const timeString = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                
+                let progress = 0;
+                if (totalSeconds > 0) {
+                    progress = secondsRemaining / totalSeconds;
                 }
-                const progress = secondsRemaining / totalSeconds;
                 const dashoffset = progressCircleCircumference * (1 - progress);
+
+                // Update main modal
+                timerDisplay.textContent = timeString;
                 timerProgress.style.strokeDashoffset = Math.max(0, dashoffset);
+                
+                // Update mini window if open
+                if (miniWindow && !miniWindow.closed) {
+                   miniWindow.updateUI(tasks[currentTaskIndex].name, timeString, Math.max(0, dashoffset));
+                }
             }
 
             function showTimerModal() {
@@ -390,6 +396,9 @@
                 stopRingtone();
                 timerModal.classList.add('hidden');
                 clearInterval(timerInterval);
+                if (miniWindow && !miniWindow.closed) {
+                    miniWindow.close();
+                }
             }
             
             function showEndPrompt() {
@@ -400,14 +409,94 @@
                  endPrompt.classList.add('hidden');
             }
 
+            // --- Mini Window Logic ---
+            function openMiniWindow() {
+                if (miniWindow && !miniWindow.closed) {
+                    miniWindow.focus();
+                    return;
+                }
+
+                const miniHtml = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                      <title>Japandi Timer</title>
+                      <script src="https://cdn.tailwindcss.com"><\/script>
+                      <style>
+                        :root {
+                            --bg-color: #F5F5F3; --primary-text: #343434; --secondary-text: #6B7280; --accent-color: #B9A28C;
+                            --accent-color-dark: #9A8370; --container-bg: #FFFFFF; --border-color: #E5E5E3; --timer-bg: #EAEAEA; --timer-fill: #343434;
+                        }
+                        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--primary-text); text-align: center; }
+                        .timer-circle { transition: stroke-dashoffset 0.3s linear; transform: rotate(-90deg); transform-origin: 50% 50%; }
+                        .hover-bg-accent-dark:hover { background-color: var(--accent-color-dark); }
+                      <\/style>
+                    </head>
+                    <body class="antialiased p-6">
+                        <h2 id="timerTaskName" class="text-xl font-bold truncate"></h2>
+                        <div class="relative w-48 h-48 mx-auto my-4">
+                            <svg class="w-full h-full" viewBox="0 0 100 100">
+                                <circle stroke="var(--timer-bg)" stroke-width="12" fill="var(--container-bg)" r="44" cx="50" cy="50" />
+                                <circle id="timerProgress" class="timer-circle" stroke-width="8" stroke-linecap="round" stroke="var(--timer-fill)" fill="transparent" r="44" cx="50" cy="50" style="stroke-dasharray: 276.46; stroke-dashoffset: 276.46;" />
+                            </svg>
+                            <div id="timerDisplay" class="absolute inset-0 flex items-center justify-center text-4xl font-bold">00:00</div>
+                        </div>
+                        <div id="endPrompt" class="hidden space-y-2">
+                             <p class="text-md text-secondary">Task finished.</p>
+                             <button id="nextTaskBtn" class="w-full bg-primary-text text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700">Next Task</button>
+                             <div class="flex items-center justify-center pt-2">
+                                 <button class="add-time-btn bg-accent text-white rounded-full h-8 w-8 font-bold hover-bg-accent-dark" data-time="1">1</button>
+                                 <button class="add-time-btn bg-accent text-white rounded-full h-8 w-8 font-bold ml-2 hover-bg-accent-dark" data-time="5">5</button>
+                                 <button class="add-time-btn bg-accent text-white rounded-full h-8 w-8 font-bold ml-2 hover-bg-accent-dark" data-time="10">10</button>
+                             </div>
+                        </div>
+                        <script>
+                            const taskNameEl = document.getElementById('timerTaskName');
+                            const displayEl = document.getElementById('timerDisplay');
+                            const progressEl = document.getElementById('timerProgress');
+                            const endPromptEl = document.getElementById('endPrompt');
+                            const nextTaskBtn = document.getElementById('nextTaskBtn');
+
+                            function updateUI(taskName, timeString, dashoffset) {
+                                taskNameEl.textContent = taskName;
+                                taskNameEl.title = taskName;
+                                displayEl.textContent = timeString;
+                                progressEl.style.strokeDashoffset = dashoffset;
+                            }
+                            
+                            function showEndPrompt(hasNext) {
+                                endPromptEl.classList.remove('hidden');
+                                nextTaskBtn.style.display = hasNext ? 'block' : 'none';
+                            }
+                            
+                            function hideEndPrompt() {
+                                endPromptEl.classList.add('hidden');
+                            }
+
+                            nextTaskBtn.addEventListener('click', () => window.opener.startNextTask());
+                            document.querySelectorAll('.add-time-btn').forEach(btn => {
+                                btn.addEventListener('click', (e) => {
+                                    window.opener.addTime(parseInt(e.target.dataset.time, 10));
+                                });
+                            });
+                            
+                            window.addEventListener('beforeunload', () => {
+                                window.opener.miniWindow = null;
+                            });
+                        <\/script>
+                    </body>
+                    </html>
+                `;
+                miniWindow = window.open('', 'JapandiTimerMini', 'width=300,height=380,resizable=yes,scrollbars=no');
+                miniWindow.document.write(miniHtml);
+                miniWindow.document.close();
+            }
+
+
             // --- Event Listeners ---
 
             addTaskBtn.addEventListener('click', parseAndAddTasks);
-            taskInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    parseAndAddTasks();
-                }
-            });
+            taskInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') parseAndAddTasks(); });
             
             taskList.addEventListener('click', (e) => {
                 if(e.target.classList.contains('remove-task-btn')) {
@@ -419,12 +508,19 @@
             startPlaylistBtn.addEventListener('click', startPlaylist);
             nextTaskBtn.addEventListener('click', startNextTask);
             closeModalBtn.addEventListener('click', hideTimerModal);
+            miniWindowBtn.addEventListener('click', openMiniWindow);
 
             document.querySelectorAll('.add-time-btn').forEach(button => {
                 button.addEventListener('click', (e) => {
                     const timeToAdd = parseInt(e.target.dataset.time, 10);
                     addTime(timeToAdd);
                 });
+            });
+            
+            window.addEventListener('beforeunload', () => {
+                if (miniWindow && !miniWindow.closed) {
+                    miniWindow.close();
+                }
             });
 
             // Initial Render
