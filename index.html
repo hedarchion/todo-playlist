@@ -137,10 +137,6 @@
     <audio id="ringtone" src="ringtone.ogg" preload="auto"></audio>
 
     <script>
-        // Make functions globally accessible for the mini-window
-        window.startNextTask = startNextTask;
-        window.addTime = addTime;
-
         document.addEventListener('DOMContentLoaded', () => {
             // DOM Elements
             const taskInput = document.getElementById('taskInput');
@@ -174,7 +170,6 @@
 
             // --- Timer Dial Generation ---
             function renderDialMarks() {
-                // This function remains unchanged
                 timerDialMarks.innerHTML = ''; 
                 const center = 50;
                 const majorRadius = 38; 
@@ -223,7 +218,6 @@
 
             // --- Task Management ---
             function parseAndAddTasks() {
-                // This function remains unchanged
                 const inputText = taskInput.value.trim();
                 if (!inputText) return;
                 const taskStrings = inputText.split(',');
@@ -243,7 +237,6 @@
             }
             
             function renderTasks() {
-                // This function remains unchanged
                 taskList.innerHTML = '';
                 if (tasks.length === 0) {
                     taskList.innerHTML = `<p class="text-center text-secondary">Your task list is empty.</p>`;
@@ -327,6 +320,7 @@
                 currentTaskIndex++;
                 startTask(currentTaskIndex);
             }
+            // **FIX**: Make function globally accessible AFTER it has been defined
             window.startNextTask = startNextTask;
 
 
@@ -358,6 +352,7 @@
 
                 updateUIs();
             }
+            // **FIX**: Make function globally accessible AFTER it has been defined
             window.addTime = addTime;
 
             function endPlaylist() {
