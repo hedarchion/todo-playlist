@@ -65,9 +65,9 @@
 </head>
 <body class="antialiased">
 
-    <div id="app" class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 transition-all duration-500">
+    <div id="app" class="min-h-screen flex flex-col items-center justify-center p-4 transition-all duration-500">
         
-        <div class="w-full max-w-lg mx-auto bg-container rounded-2xl shadow-lg p-6 sm:p-8 space-y-6">
+        <div class="w-full max-w-lg mx-auto bg-container rounded-2xl shadow-lg p-6 space-y-6">
 
             <div class="text-center">
                 <h1 class="text-3xl font-bold text-primary">Japandi Timer</h1>
@@ -93,7 +93,7 @@
         </div>
 
         <div id="timerModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
-            <div class="bg-container rounded-2xl shadow-2xl p-8 sm:p-10 w-full max-w-md text-center space-y-6 relative">
+            <div class="bg-container rounded-2xl shadow-2xl p-8 w-full max-w-md text-center space-y-6 relative">
                  <button id="miniWindowBtn" class="absolute top-4 right-4 text-secondary hover:text-primary transition-colors" title="Open mini timer">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                 </button>
@@ -115,7 +115,7 @@
 
                 <div id="endPrompt" class="hidden space-y-4 pt-4">
                      <p class="text-lg text-secondary">Task finished. What's next?</p>
-                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     <div class="grid grid-cols-1 gap-4">
                         <button id="nextTaskBtn" class="w-full bg-primary-text text-white font-semibold py-3 px-5 rounded-lg hover:bg-gray-700 transition-colors">
                             Next Task
                         </button>
